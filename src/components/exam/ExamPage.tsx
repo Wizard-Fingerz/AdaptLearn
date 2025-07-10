@@ -190,14 +190,19 @@ export const ExamPage: React.FC = () => {
           answer: ans.answer_text // Use answer_text as answer to satisfy type
         }))
       );
-      
+      console.log('Exam submission result:', result);
+      if (!result || typeof result.score === 'undefined') {
+        setError('Submission failed: Invalid response from server.');
+        setSubmitting(false);
+        return;
+      }
       // Navigate to results page
       navigate(`/exam/result/${examData.id}`, { 
         state: { 
           score: result.score,
-          totalQuestions: examData.totalQuestions,
-          passingScore: examData.passingScore,
-          attemptId: attemptId,
+          totalQuestions: result.totalQuestions,
+          passingScore: result.passingScore,
+          attemptId: result.attemptId,
           answers: formattedAnswers
         }
       });
