@@ -5,6 +5,8 @@ import { Box, Typography, Button, Paper } from '@mui/material';
 export const ExamResult: React.FC = () => {
   const { state } = useLocation();
   const { examId } = useParams();
+
+  console.log(examId);
   const navigate = useNavigate();
 
   if (!state) {
