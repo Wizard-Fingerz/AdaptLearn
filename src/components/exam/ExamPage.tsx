@@ -48,7 +48,7 @@ export const ExamPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<(number | string)[]>([]);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [examStarted, setExamStarted] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
@@ -77,12 +77,14 @@ export const ExamPage: React.FC = () => {
           questions: exam.questions.map((q: { 
             id: number;
             question_text: string;
+            question_type: string;
             choices: Array<{ choice_text: string; is_correct: boolean }>;
           }) => ({
             id: q.id,
             text: q.question_text,
-            options: q.choices.map((choice) => choice.choice_text),
-            correctAnswer: q.choices.findIndex((choice) => choice.is_correct)
+            question_type: q.question_type,
+            options: q.choices?.map((choice) => choice.choice_text) || [],
+            correctAnswer: q.choices?.findIndex((choice) => choice.is_correct),
           }))
         };
 
@@ -131,9 +133,13 @@ export const ExamPage: React.FC = () => {
     }
   };
 
-  const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
+  const handleAnswerChange = (questionIndex: number, answer: number | string) => {
     const newAnswers = [...answers];
-    newAnswers[questionIndex] = answerIndex;
+    if (typeof answer === 'number') {
+      newAnswers[questionIndex] = answer;
+    } else {
+      newAnswers[questionIndex] = answer;
+    }
     setAnswers(newAnswers);
   };
 
@@ -161,22 +167,29 @@ export const ExamPage: React.FC = () => {
       }
 
       // Convert answers to the format expected by the API
-      const formattedAnswers: Answer[] = answers.map((answer, index) => {
+      const formattedAnswers = answers.map((answer, index) => {
         const question = examData.questions[index];
         if (answer === -1) return null; // Skip unanswered questions
-        
+
         return {
           question: question.id,
-          answer: question.options?.[answer] ?? '' // Handle undefined options safely
+          answer_text: question.question_type === 'short_answer' ? answer : question.options?.[answer as number] ?? ''
         };
-      }).filter((answer): answer is Answer => answer !== null); // Remove null answers
+      }).filter((answer): answer is { question: number, answer_text: string } => answer !== null);
 
       if (formattedAnswers.length === 0) {
         throw new Error('Please answer at least one question before submitting');
       }
 
       // Submit the exam
-      const result = await examService.submitExam(attemptId, formattedAnswers);
+      const result = await examService.submitExam(
+        attemptId,
+        formattedAnswers.map(ans => ({
+          question: ans.question,
+          answer_text: ans.answer_text,
+          answer: ans.answer_text // Use answer_text as answer to satisfy type
+        }))
+      );
       
       // Navigate to results page
       navigate(`/exam/result/${examData.id}`, { 
@@ -345,28 +358,62 @@ export const ExamPage: React.FC = () => {
                   {examData?.questions[currentQuestion].text}
                 </Typography>
 
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    value={answers[currentQuestion]}
-                    onChange={(e) => handleAnswerChange(currentQuestion, parseInt(e.target.value))}
-                  >
-                    {examData?.questions[currentQuestion]?.options?.map((option, index) => (
-                      <FormControlLabel
-                        key={index}
-                        value={index}
-                        control={<Radio />}
-                        label={option}
-                        sx={{
-                          p: 1,
-                          borderRadius: 1,
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                          },
-                        }}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
+                {(() => {
+                  const q = examData?.questions[currentQuestion];
+                  if (!q) return null;
+                  switch (q.question_type) {
+                    case 'multiple_choice':
+                      return (
+                        <FormControl component="fieldset">
+                          <RadioGroup
+                            value={answers[currentQuestion]}
+                            onChange={(e) => handleAnswerChange(currentQuestion, parseInt(e.target.value))}
+                          >
+                            {(q.options || []).map((option, index) => (
+                              <FormControlLabel
+                                key={index}
+                                value={index}
+                                control={<Radio />}
+                                label={option}
+                                sx={{
+                                  p: 1,
+                                  borderRadius: 1,
+                                  '&:hover': {
+                                    bgcolor: 'action.hover',
+                                  },
+                                }}
+                              />
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                      );
+                    case 'true_false':
+                      return (
+                        <FormControl component="fieldset">
+                          <RadioGroup
+                            value={answers[currentQuestion]}
+                            onChange={(e) => handleAnswerChange(currentQuestion, parseInt(e.target.value))}
+                          >
+                            <FormControlLabel value={0} control={<Radio />} label="True" />
+                            <FormControlLabel value={1} control={<Radio />} label="False" />
+                          </RadioGroup>
+                        </FormControl>
+                      );
+                    case 'short_answer':
+                      return (
+                        <FormControl fullWidth>
+                          <textarea
+                            value={answers[currentQuestion] === -1 ? '' : answers[currentQuestion]}
+                            onChange={(e) => handleAnswerChange(currentQuestion, e.target.value)}
+                            style={{ width: '100%', padding: 8, fontSize: 16, minHeight: 80 }}
+                          />
+                        </FormControl>
+                      );
+                    // Add more cases for other types if needed
+                    default:
+                      return <Typography color="error">Unknown question type</Typography>;
+                  }
+                })()}
               </Stack>
             </CardContent>
           </Card>
