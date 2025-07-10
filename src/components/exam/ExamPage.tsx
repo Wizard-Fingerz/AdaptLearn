@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 // import { useAuth } from '../../context/AuthContext';
-import examService, { Answer, Question } from '../../services/examService';
+import examService, {  Question } from '../../services/examService';
 
 interface ExamData {
   id: number;
