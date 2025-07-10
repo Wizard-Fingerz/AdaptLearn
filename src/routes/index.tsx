@@ -24,6 +24,7 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ExamResult } from '../components/exam/ExamResult';
 
 // Helper component for role-based redirect
 const RoleBasedRedirect: React.FC = () => {
@@ -147,6 +148,16 @@ const studentRoutes: RouteObject[] = [
       <ProtectedRoute>
         <MainLayout>
           <HelpCenter />
+        </MainLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/exam/result/:examId',
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <ExamResult />
         </MainLayout>
       </ProtectedRoute>
     ),
