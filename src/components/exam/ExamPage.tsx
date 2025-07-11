@@ -157,9 +157,9 @@ export const ExamPage: React.FC = () => {
 
   const handleSubmitExam = async () => {
     if (submitting) return; // Prevent multiple submissions
+    setSubmitting(true);
     
     try {
-      setSubmitting(true);
       setError(null);
 
       if (!examData || !attemptId) {
