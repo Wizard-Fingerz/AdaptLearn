@@ -21,14 +21,11 @@ export const ExamResult: React.FC = () => {
   return (
     <Box p={4}>
       <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" gutterBottom>Exam Result</Typography>
-        <Typography variant="h6">Score: {state.score}</Typography>
-        <Typography>Total Questions: {state.totalQuestions}</Typography>
-        <Typography>Passing Score: {state.passingScore}</Typography>
-        <Typography>
-          {state.score >= state.passingScore ? 'Congratulations, you passed!' : 'Sorry, you did not pass.'}
+        <Typography variant="h4" gutterBottom>Exam Submitted</Typography>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Your answers have been marked and you will get your score when your teacher has graded them.
         </Typography>
-        <Button sx={{ mt: 2 }} onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        <Button sx={{ mt: 4 }} onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
       </Paper>
     </Box>
   );
